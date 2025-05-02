@@ -1,198 +1,296 @@
-
 import 'package:flutter/material.dart';
+import 'package:proyecto_movil/objetos/tipo_documento.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String? _tipoDocumento;
+  DateTime? _fechaSeleccionada;
+  final TextEditingController _fechaController = TextEditingController();
+  final TextEditingController _nroDocumentoController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fechaController.dispose();
+    _nroDocumentoController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildStep(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_outline, size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    //este metodo me devuleve el tamaño de la pantalla
-    final size= MediaQuery.of(context).size;
-    return  Scaffold(
-      //CAJA PURPURA
-body: Container(
-  width: double.infinity,
-  height: double.infinity,
-//STACK sirve para contener un conjunto de widgets y apilarlos uno encima del otro
-  child: Stack(
-children: [
-Container(
-decoration: BoxDecoration(
-  borderRadius: BorderRadius.circular(25),
-  gradient: LinearGradient(colors:[
-    Color.fromRGBO(9, 18, 192, 1),
-    Color.fromRGBO(9, 18, 192, 1),
-    
+    final size = MediaQuery.of(context).size;
 
-  ],),
-  
-),
-//color: Colors.purple,
-width: double.infinity,
-height: size.height * 0.2,
-
-//CIRCULOS PEQUEÑOS
-child: Stack(
-children: [
-  Positioned(child: Container(
-    width: 100,
-    height:100,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(100),
-      color: Color.fromRGBO(255,255,255, 0.05),
-    ),
-
-  ),
-  top: 90,
-  left: 30,
-  ),
-  
-
-],
-
-),
-),
-//WIDGET DE IMAGEN
-Container(
-  margin: EdgeInsets.only(top: 80),
-width: double.infinity,
-child: Text(
-  'Hola! ',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    color: Colors.white,
-    fontSize: 20,
-    fontWeight: FontWeight.bold
-  ),
-),
-
-// child: Icon(
-//   Icons.person_pin,
-//   color: Colors.white,
-//   size: 100,
-
-// ),
-),
-//CAJA BLANCA DEL LOGIN
-Column(
-children: [  
-SizedBox(height: 250),
-Container(
-padding:EdgeInsets.all(20),
-margin: EdgeInsets.symmetric(horizontal: 30),
-width: double.infinity,
-//TAMAÑO DE LA CAJA
-height: 450,  
-//color:Colors.green,
-decoration: BoxDecoration(
-color: Colors.white,
-borderRadius: BorderRadius.circular(25),
-boxShadow: [
-  BoxShadow(
-    color: Colors.black12,
-    offset: Offset(0, 5),
-    blurRadius: 50,
-    //spreadRadius: -5
-  )
-]
-
-),
-child: Column(
-children: [
-  SizedBox(height: 10),
-  Text(
-    'Ingresar datos PRUEBA',
-     style:Theme.of(context).textTheme.headlineMedium,),
-  //Espacio entre el texto y el siguiente widget
-  SizedBox(height: 20),
-  Container(
-    child: Form(
-child: Column(
-  children: [
-    TextFormField(
-      autocorrect: false,
-      decoration: InputDecoration(
-        hintText: 'Tipo de Documento',
-        labelText: 'Tipo de Documento',
-        prefixIcon: Icon(Icons.person),
-        //suffixIcon: Icon(Icons.check_circle),
-        //border: OutlineInputBorder(borderRadius: BorderRadius.circular(20))
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color.fromRGBO(9, 18, 192, 1),
+                    Color.fromRGBO(9, 18, 192, 1),
+                  ],
+                ),
+              ),
+              width: double.infinity,
+              height: size.height * 0.2,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 90,
+                    left: 30,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                        color: const Color.fromRGBO(255, 255, 255, 0.05),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 80),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '¡Hola!\n',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              height: 1.8,
+                            ),
+                          ),
+                          TextSpan(
+                            text:
+                                'Por favor, registra tu número de documento de identidad antes de ingresar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsets.symmetric(horizontal: 30),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          offset: Offset(0, 5),
+                          blurRadius: 50,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Ingrese sus datos\n',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                              ),
+                              TextSpan(
+                                text:
+                                    'Por favor complete los siguientes pasos:\n',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              WidgetSpan(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildStep('1. Seleccione su tipo de documento'),
+                                      _buildStep('2. Ingrese su número de documento'),
+                                      _buildStep('3. Elija la fecha de emisión de su documento'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  hintText: 'Tipo de Documento',
+                                  labelText: 'Tipo de Documento',
+                                  prefixIcon: Icon(Icons.person),
+                                ),
+                                value: _tipoDocumento,
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _tipoDocumento = newValue;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Seleccione un tipo de documento';
+                                  }
+                                  return null;
+                                },
+                                items: tiposDocumento
+                                    .map((String value) => DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        ))
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 20),
+                              TextFormField(
+                                controller: _nroDocumentoController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Nro de Documento',
+                                  labelText: 'Nro de Documento',
+                                  prefixIcon: Icon(Icons.search),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor ingrese el número de documento';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              TextFormField(
+                                controller: _fechaController,
+                                readOnly: true,
+                                onTap: () async {
+                                  FocusScope.of(context).requestFocus(FocusNode());
+                                  DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(1900),
+                                    lastDate: DateTime(2100),
+                                    locale: const Locale("es", "ES"),
+                                  );
+                                  if (pickedDate != null) {
+                                    setState(() {
+                                      _fechaSeleccionada = pickedDate;
+                                      _fechaController.text =
+                                          "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
+                                    });
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Fecha de Emisión',
+                                  labelText: 'Fecha de Emisión',
+                                  prefixIcon: Icon(Icons.date_range),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor seleccione una fecha';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 30),
+                              MaterialButton(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                disabledColor: Colors.grey,
+                                elevation: 0,
+                                color: const Color.fromRGBO(9, 18, 192, 1),
+                                onPressed: () {
+                                  if (_formKey.currentState?.validate() ?? false) {
+                                    Navigator.pushNamed(context, 'home');
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 80,
+                                    vertical: 15,
+                                  ),
+                                  child: const Text(
+                                    'Ingresar',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-    SizedBox(height: 20),
-      TextFormField(
-      autocorrect: false,
-      decoration: InputDecoration(
-        hintText: 'Nro de Documento',
-        labelText: 'Nro de Documento',
-        prefixIcon: Icon(Icons.search),
-        //suffixIcon: Icon(Icons.check_circle),
-        //border: OutlineInputBorder(borderRadius: BorderRadius.circular(20))
-      ),
-    ),
-    SizedBox(height: 20),
-    TextFormField(
-      autocorrect: false,
-      decoration: InputDecoration(
-        hintText: 'Fecha de Emisión',
-        //labelText: 'Fecha de Emisión',
-        prefixIcon: Icon(Icons.date_range),
-        //suffixIcon: Icon(Icons.check_circle),
-        //border: OutlineInputBorder(borderRadius: BorderRadius.circular(20))
-      ),
-    ),
-     SizedBox(height: 30),
-    //CREANDO EL BOTON DE INGRESAR
-    MaterialButton(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20)
-      ),
-      disabledColor: Colors.grey,
-      elevation: 0,
-      color: Color.fromRGBO(9, 18, 192, 1),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 80, vertical: 15),
-        child: Text('Ingresar',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 18
-        ),),
-      ),
-      onPressed: (){
-        Navigator.pushNamed(context, 'home');
-      },
-    )
-  ],
-)
-
-    )
-  )
-],
-
-)
-
-
-),
-SizedBox(height: 30),
-// Text('Crear una cuenta Nueva',
-// style: TextStyle(
-//   //color: Colors.white,
-//   fontSize: 15,
-//   fontWeight: FontWeight.bold
-// ),),
-
-],
-
-
-)
-
-],
-
-  ),
-
-)
-
-
     );
   }
 }

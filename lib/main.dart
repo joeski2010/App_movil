@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:proyecto_movil/pantallas/login.dart';
 import 'package:proyecto_movil/pantallas/home.dart';
 import 'package:proyecto_movil/pantallas/page.dart';
@@ -13,7 +14,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       //PARA ELIMINAR EL BANNER DE DEBUGGIN
       debugShowCheckedModeBanner: false,
-      title: 'Material App',
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', 'US'),
+        const Locale('es', 'ES'),
+      ],
+      title: 'MAC Express',
       routes : {
         'page': (_) => PageScreen(),
         'login': (_) =>LoginScreen(),
