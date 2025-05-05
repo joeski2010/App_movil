@@ -1,5 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:proyecto_movil/objetos/tipo_documento.dart';
+import 'package:proyecto_movil/widgets/buildStep.dart';
+import 'package:proyecto_movil/models/LoginFormData.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +20,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _nroDocumentoController = TextEditingController();
 
+  bool _isTipoDocumentoValid = false;
+  bool _isNroDocumentoValid = false;
+  bool _isFechaValid = false;
+
+  String? _recaptchaToken;
+  bool _isCaptchaVerified = false;
+
   @override
   void dispose() {
     _fechaController.dispose();
@@ -22,8 +34,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool _validateForm() {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (isValid) {
+      final formData = LoginFormData(
+        tipoDocumento: _tipoDocumento!,
+        nroDocumento: _nroDocumentoController.text,
+        fechaEmision: _fechaController.text,
+        recaptchaToken: _recaptchaToken,
+      );
+      Navigator.pushNamed(context, 'home', arguments: formData);
+    }
+    return isValid;
+  }
+
+
   Widget _buildStep(String text) {
-    return Padding(
+    return  Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 30),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -139,19 +166,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               TextSpan(
                                 text: 'Ingrese sus datos\n',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
                               ),
                               TextSpan(
                                 text:
                                     'Por favor complete los siguientes pasos:\n',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   color: Colors.grey[600],
                                 ),
                               ),
@@ -162,9 +188,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      _buildStep('1. Seleccione su tipo de documento'),
-                                      _buildStep('2. Ingrese su número de documento'),
-                                      _buildStep('3. Elija la fecha de emisión de su documento'),
+                                      buildStep(
+                                        '1. Seleccione su tipo de documento',
+                                        isValid: _isTipoDocumentoValid,
+                                      ),
+                                      buildStep(
+                                        '2. Ingrese su número de documento',
+                                        isValid: _isNroDocumentoValid,
+                                      ),
+                                      buildStep(
+                                        '3. Elija la fecha de emisión de su documento',
+                                        isValid: _isFechaValid,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -178,30 +213,44 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: _formKey,
                           child: Column(
                             children: [
-                              DropdownButtonFormField<String>(
-                                decoration: const InputDecoration(
-                                  hintText: 'Tipo de Documento',
-                                  labelText: 'Tipo de Documento',
-                                  prefixIcon: Icon(Icons.person),
+                              GestureDetector(
+                                onTap: () {
+                                  // Valida cuando se hace clic en cualquier parte fuera del dropdown
+                                  _formKey.currentState?.validate();
+                                },
+                                child: DropdownButtonFormField<String>(
+                                  decoration: const InputDecoration(
+                                    hintText: 'Tipo de Documento',
+                                    labelText: 'Tipo de Documento',
+                                    prefixIcon: Icon(Icons.person),
+                                  ),
+                                  value: _tipoDocumento,
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _tipoDocumento = newValue;
+                                      _isTipoDocumentoValid =
+                                          newValue?.isNotEmpty ?? false;
+                                    });
+                                  },
+                                  validator: (value) {
+                                    _isTipoDocumentoValid =
+                                        value != null && value.isNotEmpty;
+                                    setState(() {});
+                                    return _isTipoDocumentoValid
+                                        ? null
+                                        : 'Seleccione un tipo de documento';
+                                  },
+                                  items:
+                                      tiposDocumento
+                                          .map(
+                                            (String value) =>
+                                                DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(value),
+                                                ),
+                                          )
+                                          .toList(),
                                 ),
-                                value: _tipoDocumento,
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _tipoDocumento = newValue;
-                                  });
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Seleccione un tipo de documento';
-                                  }
-                                  return null;
-                                },
-                                items: tiposDocumento
-                                    .map((String value) => DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        ))
-                                    .toList(),
                               ),
                               const SizedBox(height: 20),
                               TextFormField(
@@ -212,32 +261,45 @@ class _LoginScreenState extends State<LoginScreen> {
                                   prefixIcon: Icon(Icons.search),
                                 ),
                                 validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Por favor ingrese el número de documento';
-                                  }
-                                  return null;
+                                  _isNroDocumentoValid =
+                                      value != null && value.isNotEmpty;
+                                  setState(() {});
+                                  return _isNroDocumentoValid
+                                      ? null
+                                      : 'Ingrese el número de documento';
                                 },
+                                // Actualización en tiempo real (opcional)
+                                onChanged: (value) {
+                                  // Solo actualiza el estado si el valor cambió de vacío a no vacío (o viceversa)
+                                  if ((value.isNotEmpty !=
+                                      _isNroDocumentoValid)) {
+                                    setState(() {
+                                      _isNroDocumentoValid = value.isNotEmpty;
+                                    });
+                                  }
+                                },
+                                // Opcional: Validar al perder el foco
+                                onFieldSubmitted:
+                                    (_) => _formKey.currentState?.validate(),
                               ),
                               const SizedBox(height: 20),
                               TextFormField(
                                 controller: _fechaController,
                                 readOnly: true,
                                 onTap: () async {
-                                  FocusScope.of(context).requestFocus(FocusNode());
-                                  DateTime? pickedDate = await showDatePicker(
+                                  FocusScope.of(context).unfocus(); // Cierra el teclado si está abierto
+                                  final pickedDate = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(1900),
                                     lastDate: DateTime(2100),
-                                    locale: const Locale("es", "ES"),
-                                  );
-                                  if (pickedDate != null) {
-                                    setState(() {
-                                      _fechaSeleccionada = pickedDate;
-                                      _fechaController.text =
-                                          "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
-                                    });
-                                  }
+                                  ).then((date) { // Usa then para evitar setState anidados
+                                    if (date != null) {
+                                      _fechaController.text = "${date.day}/${date.month}/${date.year}";
+                                      _isFechaValid = true;
+                                      if (mounted) setState(() {});
+                                    }
+                                  });
                                 },
                                 decoration: const InputDecoration(
                                   hintText: 'Fecha de Emisión',
@@ -245,12 +307,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   prefixIcon: Icon(Icons.date_range),
                                 ),
                                 validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Por favor seleccione una fecha';
-                                  }
-                                  return null;
+                                  _isFechaValid =
+                                      value != null && value.isNotEmpty;
+                                  setState(() {}); // Actualiza el estado
+                                  return _isFechaValid
+                                      ? null
+                                      : 'Por favor seleccione una fecha';
+                                  ;
+                                },
+                                // Opcional: Validar al perder el foco
+                                onFieldSubmitted: (_) {
+                                  setState(() {
+                                    _isFechaValid =
+                                        _fechaController.text.isNotEmpty;
+                                  });
                                 },
                               ),
+
                               const SizedBox(height: 30),
                               MaterialButton(
                                 shape: RoundedRectangleBorder(
@@ -259,11 +332,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 disabledColor: Colors.grey,
                                 elevation: 0,
                                 color: const Color.fromRGBO(9, 18, 192, 1),
-                                onPressed: () {
+                                onPressed: _validateForm/*() {
                                   if (_formKey.currentState?.validate() ?? false) {
-                                    Navigator.pushNamed(context, 'home');
+                                    // Crear el objeto con los datos del formulario
+                                    final formData = LoginFormData(
+                                      tipoDocumento: _tipoDocumento!,
+                                      nroDocumento: _nroDocumentoController.text,
+                                      fechaEmision: _fechaController.text,
+                                      recaptchaToken: _recaptchaToken,
+                                    );
+
+                                    // Aquí puedes usar formData para enviar al backend
+                                    print('Datos del formulario: ${formData.toJson()}');
+
+                                    // Ejemplo de cómo podrías usarlo para navegar
+                                    Navigator.pushNamed(
+                                      context,
+                                      'home',
+                                      arguments: formData, // Envía los datos como argumento
+                                    );
                                   }
-                                },
+                                }*/,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 80,
