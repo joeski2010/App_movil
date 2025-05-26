@@ -1,10 +1,34 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:proyecto_movil/models/Ciudadano.dart';
 import 'package:proyecto_movil/objetos/tipo_documento.dart';
 import 'package:proyecto_movil/widgets/buildStep.dart';
 import 'package:proyecto_movil/models/LoginFormData.dart';
 
+Future<Ciudadano> fetchCiudadano(String dni) async {
+  try {
+    final response = await http.get(
+      Uri.parse('http://190.187.182.56:8081/api/Ciudadano/1'),
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Origin, Content-Type',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Ciudadano.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Error al cargar los datos del ciudadano');
+    }
+  } catch (e) {
+    print(e);
+    throw Exception('Error al cargar los datos del ciudadano');
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,9 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return isValid;
   }
 
-
   Widget _buildStep(String text) {
-    return  Padding(
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,15 +310,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _fechaController,
                                 readOnly: true,
                                 onTap: () async {
-                                  FocusScope.of(context).unfocus(); // Cierra el teclado si está abierto
+                                  FocusScope.of(
+                                    context,
+                                  ).unfocus(); // Cierra el teclado si está abierto
                                   final pickedDate = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(1900),
                                     lastDate: DateTime(2100),
-                                  ).then((date) { // Usa then para evitar setState anidados
+                                  ).then((date) {
+                                    // Usa then para evitar setState anidados
                                     if (date != null) {
-                                      _fechaController.text = "${date.day}/${date.month}/${date.year}";
+                                      _fechaController.text =
+                                          "${date.day}/${date.month}/${date.year}";
                                       _isFechaValid = true;
                                       if (mounted) setState(() {});
                                     }
@@ -332,27 +359,63 @@ class _LoginScreenState extends State<LoginScreen> {
                                 disabledColor: Colors.grey,
                                 elevation: 0,
                                 color: const Color.fromRGBO(9, 18, 192, 1),
-                                onPressed: _validateForm/*() {
-                                  if (_formKey.currentState?.validate() ?? false) {
-                                    // Crear el objeto con los datos del formulario
-                                    final formData = LoginFormData(
-                                      tipoDocumento: _tipoDocumento!,
-                                      nroDocumento: _nroDocumentoController.text,
-                                      fechaEmision: _fechaController.text,
-                                      recaptchaToken: _recaptchaToken,
-                                    );
+                                onPressed: () async {
+                                  if (_formKey.currentState?.validate() ??
+                                      false) {
+                                    try {
+                                      // Muestra un indicador de carga
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder:
+                                            (context) => const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                      );
 
-                                    // Aquí puedes usar formData para enviar al backend
-                                    print('Datos del formulario: ${formData.toJson()}');
+                                      // Obtiene los datos del ciudadano
+                                      final ciudadanoData =
+                                          await fetchCiudadano(
+                                            _nroDocumentoController.text,
+                                          );
 
-                                    // Ejemplo de cómo podrías usarlo para navegar
-                                    Navigator.pushNamed(
-                                      context,
-                                      'home',
-                                      arguments: formData, // Envía los datos como argumento
-                                    );
+                                      // Cierra el diálogo de carga
+                                      Navigator.of(context).pop();
+
+                                      // Navega a la siguiente pantalla con los datos
+                                      Navigator.pushNamed(
+                                        context,
+                                        'home',
+                                        arguments: {
+                                          'formData': LoginFormData(
+                                            tipoDocumento: _tipoDocumento!,
+                                            nroDocumento:
+                                                _nroDocumentoController.text,
+                                            fechaEmision: _fechaController.text,
+                                            recaptchaToken: _recaptchaToken,
+                                          ),
+                                          'ciudadanoData': ciudadanoData,
+                                        },
+                                      );
+                                    } catch (e) {
+                                      // Cierra el diálogo de carga si hay error
+                                      Navigator.of(context).pop();
+
+                                      // Muestra un mensaje de error
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Errorh: ${e.toString()}',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
                                   }
-                                }*/,
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 80,
