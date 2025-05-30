@@ -37,7 +37,7 @@ class CiudadanoService {
     print(jsonEncode({
           'idTipoDocumento': idTipoDocumento,
           'nvNumeroDocumento': nvNumeroDocumento,
-          'fechaEmision': fechaEmision,
+
         }));
     try {
       final response = await http.post(
