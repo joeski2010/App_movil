@@ -49,7 +49,7 @@ class CiudadanoService {
         body: jsonEncode({
           'idTipoDocumento': idTipoDocumento,
           'nvNumeroDocumento': nvNumeroDocumento,
-          'fechaEmision': fechaEmision,
+
         }),
       );
 
