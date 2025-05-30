@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  carousel_slider: ^5.0.0
+  shared_preferences: ^2.2.2
   
   flutter_localizations:
     sdk: flutter
