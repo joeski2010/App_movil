@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:proyecto_movil/pantallas/login.dart';
+import 'package:proyecto_movil/screens/login_screen.dart';
 import 'package:proyecto_movil/pantallas/home.dart';
 import 'package:proyecto_movil/pantallas/page.dart';
 

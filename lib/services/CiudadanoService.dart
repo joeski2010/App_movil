@@ -37,6 +37,7 @@ class CiudadanoService {
     print(jsonEncode({
           'idTipoDocumento': idTipoDocumento,
           'nvNumeroDocumento': nvNumeroDocumento,
+          'fechaEmision':fechaEmision
 
         }));
     try {
@@ -49,13 +50,13 @@ class CiudadanoService {
         body: jsonEncode({
           'idTipoDocumento': idTipoDocumento,
           'nvNumeroDocumento': nvNumeroDocumento,
-
+          'fechaEmision':fechaEmision
         }),
       );
 
       if (response.statusCode == 200) {
         print("servicio");
-        print(json.decode(response.body)['data']['existe']);
+        print(json.decode(response.body));
         return json.decode(response.body)['data']['existe'];
       } else {
         throw Exception('Error al validar ciudadanos: ${response.statusCode} - ${response.body}');
