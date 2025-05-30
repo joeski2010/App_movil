@@ -1,12 +1,12 @@
 class LoginFormData {
   final String tipoDocumento;
-  final String nroDocumento;
+  final String nvNumeroDocumento;
   final String fechaEmision;
   final String? recaptchaToken;
 
   LoginFormData({
     required this.tipoDocumento,
-    required this.nroDocumento,
+    required this.nvNumeroDocumento,
     required this.fechaEmision,
     this.recaptchaToken,
   });
@@ -15,7 +15,7 @@ class LoginFormData {
   Map<String, dynamic> toJson() {
     return {
       'tipoDocumento': tipoDocumento,
-      'nroDocumento': nroDocumento,
+      'nvNumeroDocumento': nvNumeroDocumento,
       'fechaEmision': fechaEmision,
       if (recaptchaToken != null) 'recaptchaToken': recaptchaToken,
     };

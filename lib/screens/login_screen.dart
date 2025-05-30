@@ -1,71 +1,56 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:proyecto_movil/models/Ciudadano.dart';
-import 'package:proyecto_movil/objetos/tipo_documento.dart';
-import 'package:proyecto_movil/widgets/buildStep.dart';
-import 'package:proyecto_movil/models/LoginFormData.dart';
-
-Future<Ciudadano> fetchCiudadano(String dni) async {
-  try {
-    final response = await http.get(
-      Uri.parse('https://localhost:7178/api/Ciudadano/1'),
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Origin, Content-Type',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      print(json.decode(response.body));
-      return Ciudadano.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Error al cargar los datos del ciudadano');
-    }
-  } catch (e) {
-    print(e);
-    throw Exception('Error al cargar los datos del ciudadano');
-  }
-}
-
-Future<Ciudadano> validarCiudadano() async {
-  const String url = 'https://localhost:7178/api/ciudadano/validar';
-  
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'idTipoDocumento': 1,          // Ejemplo: 1 para DNI
-        'nvNumeroDocumento': '12345678', // Número de documento
-        'fechaEmision': '2024-01-15',   // Fecha en formato YYYY-MM-DD
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      
-      print('Respuesta exitosa: ${response.body}');
-      return Ciudadano.fromJson(json.decode(response.body));
-    } else {
-      print('Error: ${response.statusCode} - ${response.body}');
-      throw Exception('Error al cargar los datos del ciudadano');
-    }
-  } catch (e) {
-    print('Excepción: $e');
-    throw Exception('Error al cargar los datos del ciudadano');
-  }
-}
+import '../models/LoginFormData.dart';
+import '../services/CiudadanoService.dart';
+import '../widgets/buildStep.dart';
+import '../objetos/tipo_documento.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
+}
+
+void _showValidationResult(BuildContext context, Map<String, dynamic> response) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Impide cerrar el diálogo tocando fuera
+    builder: (context) => WillPopScope(
+      onWillPop: () async => false, // Impide retroceder con botón físico
+      child: AlertDialog(
+        title: Text(response['existe'] == false 
+            ? 'Usuario no registrado' 
+            : 'Validación fallida'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(response['message'] ?? ''),
+            if (response['existe'] == false)
+              const SizedBox(height: 20),
+              const Text('Por favor complete su registro.'),
+          ],
+        ),
+        actions: [
+          if (response['existe'] == false)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo
+                Navigator.pushNamed(context, 'registro'); // Ir a registro
+              },
+              child: const Text('Registrarse'),
+            ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Cerrar diálogo
+              // Permanece en la misma pantalla
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -75,12 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _nroDocumentoController = TextEditingController();
 
+  String _fechaParaMostrar = ''; // Para mostrar al usuario
+
   bool _isTipoDocumentoValid = false;
   bool _isNroDocumentoValid = false;
   bool _isFechaValid = false;
 
   String? _recaptchaToken;
-  bool _isCaptchaVerified = false;
 
   @override
   void dispose() {
@@ -89,37 +75,89 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool _validateForm() {
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (isValid) {
-      final formData = LoginFormData(
-        tipoDocumento: _tipoDocumento!,
-        nvNumeroDocumento: _nroDocumentoController.text,
-        fechaEmision: _fechaController.text,
-        recaptchaToken: _recaptchaToken,
-      );
-      Navigator.pushNamed(context, 'home', arguments: formData);
-    }
-    return isValid;
-  }
-
-  Widget _buildStep(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.check_circle_outline, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
+  Future<void> _validateForm() async {
+    // Validar el formulario
+    if (_formKey.currentState?.validate() ?? false) {
+      // Asegurarse de que todos los campos tengan datos
+      if (_tipoDocumento == null ||
+          _nroDocumentoController.text.isEmpty ||
+          _fechaController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, complete todos los campos.'),
+            backgroundColor: Colors.red,
           ),
-        ],
-      ),
-    );
+        );
+        return; // Salir si falta algún dato
+      }
+
+      try {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
+        );
+        print("Enviando datos:");
+        print("Tipo documento: ${tiposDocumento.indexOf(_tipoDocumento!) + 1}");
+        print("Número documento: ${_nroDocumentoController.text.trim()}");
+        print("Fecha emisión: ${_fechaController.text.trim()}");
+
+        final ciudadanoData = await CiudadanoService.validarCiudadano(
+          idTipoDocumento: tiposDocumento.indexOf(_tipoDocumento!) + 1,
+          nvNumeroDocumento:
+              _nroDocumentoController.text.trim(), // Eliminar espacios
+          fechaEmision: _fechaController.text, // Eliminar espacios
+        );
+
+        print("object");
+        print(ciudadanoData);
+
+        if (ciudadanoData) {
+          Navigator.pushNamed(
+            context,
+            'home',
+            arguments: {
+              'formData': LoginFormData(
+                tipoDocumento: _tipoDocumento!,
+                nvNumeroDocumento: _nroDocumentoController.text,
+                fechaEmision: _fechaController.text,
+                recaptchaToken: _recaptchaToken,
+              ),
+              'ciudadanoData': ciudadanoData,
+            },
+          );
+        } else {
+          _showValidationResult(context, ciudadanoData);
+          // Mostrar mensaje de error si la validación falló
+          /*Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(ciudadanoData==false ? 'Validación fallida':'Error'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );*/
+        }
+
+      } catch (e) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      // Si la validación falla, mostrar un mensaje
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, corrija los errores en el formulario.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -267,44 +305,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: _formKey,
                           child: Column(
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  // Valida cuando se hace clic en cualquier parte fuera del dropdown
-                                  _formKey.currentState?.validate();
-                                },
-                                child: DropdownButtonFormField<String>(
-                                  decoration: const InputDecoration(
-                                    hintText: 'Tipo de Documento',
-                                    labelText: 'Tipo de Documento',
-                                    prefixIcon: Icon(Icons.person),
-                                  ),
-                                  value: _tipoDocumento,
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _tipoDocumento = newValue;
-                                      _isTipoDocumentoValid =
-                                          newValue?.isNotEmpty ?? false;
-                                    });
-                                  },
-                                  validator: (value) {
-                                    _isTipoDocumentoValid =
-                                        value != null && value.isNotEmpty;
-                                    setState(() {});
-                                    return _isTipoDocumentoValid
-                                        ? null
-                                        : 'Seleccione un tipo de documento';
-                                  },
-                                  items:
-                                      tiposDocumento
-                                          .map(
-                                            (String value) =>
-                                                DropdownMenuItem<String>(
-                                                  value: value,
-                                                  child: Text(value),
-                                                ),
-                                          )
-                                          .toList(),
+                              DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  hintText: 'Tipo de Documento',
+                                  labelText: 'Tipo de Documento',
+                                  prefixIcon: Icon(Icons.person),
                                 ),
+                                value: _tipoDocumento,
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _tipoDocumento = newValue;
+                                    _isTipoDocumentoValid =
+                                        newValue?.isNotEmpty ?? false;
+                                  });
+                                },
+                                validator: (value) {
+                                  _isTipoDocumentoValid =
+                                      value != null && value.isNotEmpty;
+                                  setState(() {});
+                                  return _isTipoDocumentoValid
+                                      ? null
+                                      : 'Seleccione un tipo de documento';
+                                },
+                                items:
+                                    tiposDocumento
+                                        .map(
+                                          (String value) =>
+                                              DropdownMenuItem<String>(
+                                                value: value,
+                                                child: Text(value),
+                                              ),
+                                        )
+                                        .toList(),
                               ),
                               const SizedBox(height: 20),
                               TextFormField(
@@ -322,9 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? null
                                       : 'Ingrese el número de documento';
                                 },
-                                // Actualización en tiempo real (opcional)
                                 onChanged: (value) {
-                                  // Solo actualiza el estado si el valor cambió de vacío a no vacío (o viceversa)
                                   if ((value.isNotEmpty !=
                                       _isNroDocumentoValid)) {
                                     setState(() {
@@ -332,32 +362,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                     });
                                   }
                                 },
-                                // Opcional: Validar al perder el foco
-                                onFieldSubmitted:
-                                    (_) => _formKey.currentState?.validate(),
                               ),
                               const SizedBox(height: 20),
                               TextFormField(
-                                controller: _fechaController,
+                                controller: TextEditingController(
+                                  text: _fechaParaMostrar,
+                                ), // Mostrar formato legible
                                 readOnly: true,
                                 onTap: () async {
-                                  FocusScope.of(
-                                    context,
-                                  ).unfocus(); // Cierra el teclado si está abierto
+                                  FocusScope.of(context).unfocus();
                                   final pickedDate = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(1900),
                                     lastDate: DateTime(2100),
-                                  ).then((date) {
-                                    // Usa then para evitar setState anidados
-                                    if (date != null) {
+                                  );
+                                  if (pickedDate != null) {
+                                    // Formato para enviar al servidor (YYYY-MM-DD)
+                                    String formattedDateForServer =
+                                        "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                                    // Formato para mostrar al usuario (DD/MM/YYYY)
+                                    String formattedDateForDisplay =
+                                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                                    setState(() {
                                       _fechaController.text =
-                                          "${date.day}/${date.month}/${date.year}";
+                                          formattedDateForServer; // Para enviar
+                                      _fechaParaMostrar =
+                                          formattedDateForDisplay; // Para mostrar
                                       _isFechaValid = true;
-                                      if (mounted) setState(() {});
-                                    }
-                                  });
+                                    });
+                                  }
                                 },
                                 decoration: const InputDecoration(
                                   hintText: 'Fecha de Emisión',
@@ -367,21 +401,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 validator: (value) {
                                   _isFechaValid =
                                       value != null && value.isNotEmpty;
-                                  setState(() {}); // Actualiza el estado
+                                  setState(() {});
                                   return _isFechaValid
                                       ? null
                                       : 'Por favor seleccione una fecha';
-                                  ;
-                                },
-                                // Opcional: Validar al perder el foco
-                                onFieldSubmitted: (_) {
-                                  setState(() {
-                                    _isFechaValid =
-                                        _fechaController.text.isNotEmpty;
-                                  });
                                 },
                               ),
-
                               const SizedBox(height: 30),
                               MaterialButton(
                                 shape: RoundedRectangleBorder(
@@ -390,63 +415,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 disabledColor: Colors.grey,
                                 elevation: 0,
                                 color: const Color.fromRGBO(9, 18, 192, 1),
-                                onPressed: () async {
-                                  if (_formKey.currentState?.validate() ??
-                                      false) {
-                                    try {
-                                      // Muestra un indicador de carga
-                                      showDialog(
-                                        context: context,
-                                        barrierDismissible: false,
-                                        builder:
-                                            (context) => const Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            ),
-                                      );
-
-                                      // Obtiene los datos del ciudadano
-                                      final ciudadanoData =
-                                          await validarCiudadano(
-                                            /*_nroDocumentoController.text,*/
-                                          );
-                                      //print(ciudadanoData);
-                                      // Cierra el diálogo de carga
-                                      Navigator.of(context).pop();
-
-                                      // Navega a la siguiente pantalla con los datos
-                                      Navigator.pushNamed(
-                                        context,
-                                        'home',
-                                        arguments: {
-                                          'formData': LoginFormData(
-                                            tipoDocumento: _tipoDocumento!,
-                                            nvNumeroDocumento:
-                                                _nroDocumentoController.text,
-                                            fechaEmision: _fechaController.text,
-                                            recaptchaToken: _recaptchaToken,
-                                          ),
-                                          'ciudadanoData': ciudadanoData,
-                                        },
-                                      );
-                                    } catch (e) {
-                                      // Cierra el diálogo de carga si hay error
-                                      Navigator.of(context).pop();
-
-                                      // Muestra un mensaje de error
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Errorh: ${e.toString()}',
-                                          ),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
+                                onPressed: _validateForm,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 80,
