@@ -18,19 +18,16 @@ class MyApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: [
-        const Locale('en', 'US'),
-        const Locale('es', 'ES'),
-      ],
+      supportedLocales: [const Locale('en', 'US'), const Locale('es', 'ES')],
       title: 'MAC Express',
-      routes : {
+      routes: {
         'page': (_) => PageScreen(),
-        'login': (_) =>LoginScreen(),
+        'login': (_) => LoginScreen(),
         'home': (_) => HomeScreen(),
-        
+
         // 'home': (context) => const Home(),
-      }, 
-      initialRoute: 'page' ,
+      },
+      initialRoute: 'page',
     );
   }
 }
