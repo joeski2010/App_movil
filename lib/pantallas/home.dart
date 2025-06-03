@@ -31,11 +31,20 @@ class _SearchBarAppState extends State<HomeScreen> {
     );
 
     return MaterialApp(
+      //initialRoute: '/',
       routes: {
+        //'/': (context) => HomeScreen(),
         'login': (context) => LoginScreen(),
         'login2': (context) => LoginScreen(),
         'login3': (context) => LoginScreen(),
-      },
+        'login4': (context) => LoginScreen(),
+              },
+
+      // routes: {
+      //   'login': (context) => LoginScreen(),
+      //   'login2': (context) => LoginScreen(),
+      //   'login3': (context) => LoginScreen(),
+      // },
       debugShowCheckedModeBanner: false,
 
       theme: themeData,
@@ -74,6 +83,7 @@ class _SearchBarAppState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              
               Column(
                 children: <Widget>[
                   //SearchField(),
@@ -106,57 +116,30 @@ class _SearchBarAppState extends State<HomeScreen> {
 
                   // Aquí puedes agregar más widgets o contenido
                   const ImageCarousel(),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 5),
                   BotonesConImagen.buildBotonesFila(context),
                 ], //children
               ),
-              const SizedBox(height: 00),
-              // Aquí puedes agregar más widgets o contenido
 
-              //LISTA DE IMAGENES
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     InkWell(
-              //       onTap: () {
-              //         // Acción para la imagen 1
-              //       },
-              //       child: Image.asset('assets/pcm.jpg', width: 60, height: 60),
-              //     ),
-              //     const SizedBox(width: 20),
-              //     InkWell(
-              //       onTap: () {
-              //         // Acción para la imagen 2
-              //       },
-              //       child: Image.asset('assets/pcm.jpg', width: 60, height: 60),
-              //     ),
-              //     const SizedBox(width: 20),
-              //     InkWell(
-              //       onTap: () {
-              //         // Acción para la imagen 3
-              //       },
-              //       child: Image.asset('assets/pcm.jpg', width: 60, height: 60),
-              //     ),
-              //   ],
-              // ),
-              // ElevatedButton( onPressed: () {
-              //   // Acción al presionar el botón
-              //   print('Botón presionado');
-              // },
-              // child: Text('Presióname'),),
+
+
+              //const SizedBox(height: 00),
+              // Aquí puedes agregar más widgets o contenido
+              
+          
               Positioned(
                 bottom: 200,
                 left: 50,
                 right: 50,
                 child: MaterialButton(
-                  minWidth: 200, // 👈 Ancho
-                  height: 50, // 👈 Alto
+                  minWidth: 200, //Ancho
+                  height: 50, //Alto
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   disabledColor: Colors.grey,
                   elevation: 0,
-                  color: const Color.fromARGB(255, 32, 61, 225),
+                  color: const Color.fromARGB(255, 9, 145, 207),
                   onPressed: () {
                     {
                       Navigator.pushNamed(context, 'login');
@@ -229,34 +212,44 @@ class _SearchBarAppState extends State<HomeScreen> {
         //           child: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
         //         ),
 
-        // bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: BottomNavigationBar(
+           currentIndex: 0,
+          onTap: (index) {
+          if (index == 1) {
+            Navigator.pushNamed(context, 'login');
+          } else if (index == 2) {
+            Navigator.pushNamed(context, 'logi2');
+          }else if (index == 3) {
+            Navigator.pushNamed(context, 'login3');
+          }
 
-        //   type: BottomNavigationBarType.fixed,
-        //   backgroundColor: const Color.fromARGB(
-        //     255,
-        //     198,
-        //     2,
-        //     2,
-        //   ), // Fondo del navbar
-        //   selectedItemColor: Colors.white, // Color del ítem seleccionado
-        //   unselectedItemColor: Colors.white, // Ítems no seleccionados
 
-        //   items: [
-        //     BottomNavigationBarItem(label: "Inicio", icon: Icon(Icons.home)),
-        //     BottomNavigationBarItem(
-        //       label: "Encuentranos",
-        //       icon: Icon(Icons.search),
-        //     ),
-        //     BottomNavigationBarItem(
-        //       label: "Contactanos",
-        //       icon: Icon(Icons.person),
-        //     ),
-        //     BottomNavigationBarItem(
-        //       label: "Satisfacción",
-        //       icon: Icon(Icons.directions),
-        //     ),
-        //   ],
-        // ),
+          // Si es index 0 no hace nada porque ya está en home
+        },
+
+
+
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: const Color.fromARGB(255,198,2,2,), // Fondo del navbar
+          selectedItemColor: Colors.white, // Color del ítem seleccionado
+          unselectedItemColor: Colors.white, // Ítems no seleccionados
+
+          items: [
+            BottomNavigationBarItem(label: "Inicio", icon: Icon(Icons.home)),
+            BottomNavigationBarItem(
+              label: "Encuentranos",
+              icon: Icon(Icons.search),
+            ),
+            BottomNavigationBarItem(
+              label: "Contactanos",
+              icon: Icon(Icons.person),
+            ),
+            BottomNavigationBarItem(
+              label: "Satisfacción",
+              icon: Icon(Icons.directions),
+            ),
+          ],
+        ),
         // bottomNavigationBar: BottomAppBar(
         //   color: Colors.transparent,
         //   elevation: 0,
@@ -314,102 +307,102 @@ class _SearchBarAppState extends State<HomeScreen> {
         //     ),
         //   ),
         // ), //BOTON
-        bottomNavigationBar: BottomAppBar(
-          color: Color.fromARGB(255, 205, 10, 23),
-          child: SafeArea(
-            child: SizedBox(
-              height: 80, // Ajusta este valor para que no haya overflow
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+        // bottomNavigationBar: BottomAppBar(
+        //   color: Color.fromARGB(255, 205, 10, 23),
+        //   child: SafeArea(
+        //     child: SizedBox(
+        //       height: 70, // Ajusta este valor para que no haya overflow
+        //       child: Padding(
+        //         padding: EdgeInsets.symmetric(horizontal: 5),
+        //         child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+        //           children: [
+        //             Flexible(
+        //               child: Column(
+        //                 mainAxisSize: MainAxisSize.min,
 
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.home, color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushNamed(context, 'login');
-                            },
-                            padding:
-                                EdgeInsets
-                                    .zero, // reduce padding del icono para ajustarlo
-                            constraints:
-                                BoxConstraints(), // elimina restricciones predeterminadas
-                          ),
-                          Text(
-                            "Inicio",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.map, color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushNamed(context, 'login');
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
-                          ),
-                          Text(
-                            "Encuentranos",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.cloud, color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushNamed(context, 'login');
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
-                          ),
-                          Text(
-                            "Contactanos",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.person, color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushNamed(context, 'login');
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
-                          ),
-                          Text(
-                            "Satisfacción",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        //                 children: [
+        //                   IconButton(
+        //                     icon: Icon(Icons.home, color: Colors.white),
+        //                     onPressed: () {
+        //                       Navigator.pushNamed(context, 'login');
+        //                     },
+        //                     padding:
+        //                         EdgeInsets
+        //                             .zero, // reduce padding del icono para ajustarlo
+        //                     constraints:
+        //                         BoxConstraints(), // elimina restricciones predeterminadas
+        //                   ),
+        //                   Text(
+        //                     "Inicio",
+        //                     style: TextStyle(color: Colors.white, fontSize: 12),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //             Flexible(
+        //               child: Column(
+        //                 mainAxisSize: MainAxisSize.min,
+        //                 children: [
+        //                   IconButton(
+        //                     icon: Icon(Icons.map, color: Colors.white),
+        //                     onPressed: () {
+        //                       Navigator.pushNamed(context, 'login');
+        //                     },
+        //                     padding: EdgeInsets.zero,
+        //                     constraints: BoxConstraints(),
+        //                   ),
+        //                   Text(
+        //                     "Encuentranos",
+        //                     style: TextStyle(color: Colors.white, fontSize: 12),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //             Flexible(
+        //               child: Column(
+        //                 mainAxisSize: MainAxisSize.min,
+        //                 children: [
+        //                   IconButton(
+        //                     icon: Icon(Icons.cloud, color: Colors.white),
+        //                     onPressed: () {
+        //                       Navigator.pushNamed(context, 'login');
+        //                     },
+        //                     padding: EdgeInsets.zero,
+        //                     constraints: BoxConstraints(),
+        //                   ),
+        //                   Text(
+        //                     "Contactanos",
+        //                     style: TextStyle(color: Colors.white, fontSize: 12),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //             Flexible(
+        //               child: Column(
+        //                 mainAxisSize: MainAxisSize.min,
+        //                 children: [
+        //                   IconButton(
+        //                     icon: Icon(Icons.person, color: Colors.white),
+        //                     onPressed: () {
+        //                       Navigator.pushNamed(context, 'login');
+        //                     },
+        //                     padding: EdgeInsets.zero,
+        //                     constraints: BoxConstraints(),
+        //                   ),
+        //                   Text(
+        //                     "Satisfacción",
+        //                     style: TextStyle(color: Colors.white, fontSize: 12),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ),
     );
   }
